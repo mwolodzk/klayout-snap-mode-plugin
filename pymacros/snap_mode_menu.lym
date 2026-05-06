@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Install Snap Mode menu</description>
+ <version>1.0</version>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text><![CDATA[
+import pya
+
+MODE_LABELS = {
+    "ortho": "Orthogonal",
+    "diagonal": "Diagonal",
+    "any": "Any Direction",
+}
+
+MODE_SHORTCUTS = {
+    "ortho": "Ctrl+N",
+    "diagonal": "N",
+    "any": "Ctrl+Shift+N",
+}
+
+MENU_ROOT = "edit_menu.snap_mode_menu"
+MENU_SEPARATOR = "edit_menu.snap_mode_separator"
+
+_menu_actions = {}
+_popup_qactions = []
+_install_timer = None
+_install_attempts = 0
+
+
+def _app():
+    return pya.Application.instance()
+
+
+def _current_mode():
+    mode = _app().get_config("edit-move-angle-mode") or "diagonal"
+    if mode not in MODE_LABELS:
+        return "diagonal"
+    return mode
+
+
+def _set_mode(mode):
+    app = _app()
+    app.set_config("edit-connect-angle-mode", mode)
+    app.set_config("edit-move-angle-mode", mode)
+    _update_action_titles()
+    print(f"[snap-mode] set movement/path constraint to {MODE_LABELS[mode]} ({mode})")
+
+
+def _popup_menu():
+    current = _current_mode()
+    menu = pya.QMenu()
+    _popup_qactions[:] = []
+
+    title = menu.addAction(f"Snap Mode: {MODE_LABELS[current]}")
+    title.setEnabled(False)
+
+    menu.addSeparator()
+
+    for mode, label in MODE_LABELS.items():
+        action = pya.QAction(label, menu)
+        action.setCheckable(True)
+        action.setChecked(mode == current)
+        action.triggered(lambda _checked=False, m=mode: _set_mode(m))
+        menu.addAction(action)
+        _popup_qactions.append(action)
+
+    menu.addSeparator()
+    hint = menu.addAction("Hint: Shift=Orthogonal, Ctrl=Diagonal, Shift+Ctrl=Any")
+    hint.setEnabled(False)
+    return menu
+
+
+def _show_popup():
+    menu = _popup_menu()
+    menu.exec_(pya.QCursor.pos)
+
+
+def _update_action_titles():
+    current = _current_mode()
+    for mode, action in _menu_actions.items():
+        prefix = "• " if mode == current else ""
+        action.title = f"{prefix}{MODE_LABELS[mode]}"
+        action.shortcut = MODE_SHORTCUTS[mode]
+        action.default_shortcut = MODE_SHORTCUTS[mode]
+
+
+def _make_action(mode):
+    action = pya.Action()
+    action.shortcut = MODE_SHORTCUTS[mode]
+    action.default_shortcut = MODE_SHORTCUTS[mode]
+    action.on_triggered += lambda m=mode: _set_mode(m)
+    _menu_actions[mode] = action
+    return action
+
+
+def _install_menu():
+    global _install_attempts
+    mw = pya.MainWindow.instance()
+    if mw is None:
+        _schedule_install()
+        return
+
+    menu = mw.menu()
+
+    try:
+        zoom_fit_sel = menu.action("zoom_menu.zoom_fit_sel")
+        zoom_fit_sel.shortcut = "Ctrl+Shift+F"
+        zoom_fit_sel.default_shortcut = "Ctrl+Shift+F"
+    except Exception:
+        pass
+
+    try:
+        new_hier = menu.action("file_menu.new_hierarchical_layout")
+        new_hier.shortcut = "Ctrl+Alt+N"
+        new_hier.default_shortcut = "Ctrl+Alt+N"
+    except Exception:
+        pass
+
+    if menu.is_valid(MENU_ROOT):
+        menu.delete_item(MENU_ROOT)
+    if menu.is_valid(MENU_SEPARATOR):
+        menu.delete_item(MENU_SEPARATOR)
+
+    menu.insert_separator("edit_menu.end", "snap_mode_separator")
+    menu.insert_menu("edit_menu.end", "snap_mode_menu", "Snap Mode")
+
+    popup_action = pya.Action()
+    popup_action.title = "Choose Snap Mode..."
+    popup_action.on_triggered += _show_popup
+    menu.insert_item(f"{MENU_ROOT}.end", "snap_mode_popup", popup_action)
+    menu.insert_separator(f"{MENU_ROOT}.end", "snap_mode_inner_separator")
+
+    menu.insert_item(f"{MENU_ROOT}.end", "snap_mode_ortho", _make_action("ortho"))
+    menu.insert_item(f"{MENU_ROOT}.end", "snap_mode_diagonal", _make_action("diagonal"))
+    menu.insert_item(f"{MENU_ROOT}.end", "snap_mode_any", _make_action("any"))
+
+    _update_action_titles()
+
+
+def _schedule_install():
+    global _install_timer, _install_attempts
+    if _install_attempts >= 20:
+        print("[snap-mode] main window did not appear, menu not installed")
+        return
+    _install_attempts += 1
+    _install_timer = pya.QTimer()
+    _install_timer.setSingleShot(True)
+    _install_timer.timeout(_install_menu)
+    _install_timer.start(250)
+
+
+_install_menu()
+]]></text>
+</klayout-macro>
