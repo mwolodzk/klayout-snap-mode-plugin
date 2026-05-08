@@ -3,14 +3,14 @@
  <name>mwolodzk.SnapModePlugin</name>
  <token/>
  <hidden>false</hidden>
- <version>0.1.0</version>
+ <version>0.1.1</version>
  <api-version/>
  <title>Snap Mode Plugin</title>
  <doc>Shortcut-driven snap mode switching for movement and path routing in KLayout.</doc>
  <doc-url>https://github.com/mwolodzk/klayout-snap-mode-plugin</doc-url>
- <url>git+https://github.com/mwolodzk/klayout-snap-mode-plugin.git[v0.1.0]</url>
+ <url>git+https://github.com/mwolodzk/klayout-snap-mode-plugin.git[v0.1.1]</url>
  <license>MIT</license>
  <author>Michał Wołodźko</author>
  <author-contact>mwolodzk@gmail.com</author-contact>
- <authored-time>2026-05-06T00:00:00</authored-time>
+ <authored-time>2026-05-08T00:00:00</authored-time>
 </salt-grain>

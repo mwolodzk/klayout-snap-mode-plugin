@@ -42,8 +42,8 @@ KLayout will discover the package automatically on next start.
 
 ## Notes
 
-- The plugin was written by OpenAI Codex in a live coding session for Michał Wołodźko.
-- Functional behavior was tested in the user's KLayout environment.
+- The plugin was written by OpenAI Codex, GPT-5.4 default, in a live coding session for Michał Wołodźko.
+- Functional behavior was verified in vivo by Michał Wołodźko in his KLayout environment.
 - The implementation stays self-contained and can be removed by deleting this one package directory.
 
 ## License
